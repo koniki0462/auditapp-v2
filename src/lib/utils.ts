@@ -1,4 +1,4 @@
-import type { AuditStatus, Severity } from "./data";
+import type { AuditStatus, EntityType, Organization, OrganizationStatus, Severity } from "./data";
 
 export function cn(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(" ");
@@ -40,6 +40,33 @@ export const severityTone: Record<Severity, Tone> = {
   High: "caution",
   Critical: "danger",
 };
+
+export const organizationStatusTone: Record<OrganizationStatus, Tone> = {
+  Pending: "warning",
+  Active: "success",
+  Suspended: "caution",
+  Dissolved: "neutral",
+};
+
+export const entityTypes: EntityType[] = [
+  "Sole Proprietorship",
+  "Partnership",
+  "LLC",
+  "Corporation",
+  "Non-Profit",
+  "Government",
+  "Other",
+];
+
+export const monthNames = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+/** The name people know an organization by: its trade name if it has one, otherwise its legal name. */
+export function organizationName(o: Pick<Organization, "legalName" | "tradeName">): string {
+  return o.tradeName?.trim() || o.legalName;
+}
 
 export const statusStyles = Object.fromEntries(
   Object.entries(statusTone).map(([k, t]) => [k, toneStyles[t]]),

@@ -1,8 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { audits, findings } from "@/test/fixtures";
-import { ApiError, getAudit, getAudits, getFindingsForAudit } from "./data";
+import { ApiError, getAudit, getAudits, getFindingsForAudit, send } from "./data";
+import { getToken } from "./session";
 
 vi.mock("./env", () => ({ env: { apiBaseUrl: "http://api.test/api/" } }));
+vi.mock("./session", () => ({ getToken: vi.fn(async () => "token-123") }));
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn((url: string) => {
+    throw new Error(`NEXT_REDIRECT ${url}`);
+  }),
+}));
 
 function mockFetch(status: number, body?: unknown) {
   const fetchMock = vi.fn().mockResolvedValue(
@@ -43,6 +50,48 @@ describe("data API client", () => {
   it("throws ApiError on server errors", async () => {
     mockFetch(500, { status: 500 });
     await expect(getAudits()).rejects.toMatchObject({ name: "ApiError", status: 500 });
+  });
+
+  it("sends the session token as a bearer token", async () => {
+    const fetchMock = mockFetch(200, audits);
+    await getAudits();
+    expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ Authorization: "Bearer token-123" });
+  });
+
+  it("sends no Authorization header without a session", async () => {
+    vi.mocked(getToken).mockResolvedValueOnce(undefined);
+    const fetchMock = mockFetch(200, audits);
+    await getAudits();
+    expect(fetchMock.mock.calls[0][1].headers).not.toHaveProperty("Authorization");
+  });
+
+  it("redirects to /login when the API rejects the session", async () => {
+    mockFetch(401, { status: 401 });
+    await expect(getAudits()).rejects.toThrow("NEXT_REDIRECT /login");
+  });
+
+  it("does not send the token for login, and surfaces the API's message", async () => {
+    vi.mocked(getToken).mockClear();
+    const fetchMock = mockFetch(401, { status: 401, detail: "Invalid email or password." });
+    await expect(send("POST", "/auth/login", { email: "a@b.c", password: "x" }, false)).rejects.toMatchObject({
+      status: 401,
+      message: "Invalid email or password.",
+    });
+    expect(getToken).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: "POST", body: '{"email":"a@b.c","password":"x"}' });
+  });
+
+  it("returns field errors from a validation failure", async () => {
+    mockFetch(400, { status: 400, detail: "Validation failed", errors: { email: "must be a well-formed email address" } });
+    await expect(send("POST", "/organization/members", { email: "x" })).rejects.toMatchObject({
+      status: 400,
+      errors: { email: "must be a well-formed email address" },
+    });
+  });
+
+  it("returns nothing for 204 No Content", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+    await expect(send("DELETE", "/organization/members/u1")).resolves.toBeUndefined();
   });
 
   it("throws ApiError when the API is unreachable", async () => {
