@@ -1,38 +1,99 @@
 # AuditApp
 
-Responsive audit management front end built with **Next.js 15 (App Router)**, **React 19**, **TypeScript** and **Tailwind CSS 4**. Unit tests run on **Vitest** (Vite-powered).
+A responsive web front end for managing audits, built with **Next.js 15 (App Router)**, **React 19**, **TypeScript** and **Tailwind CSS 4**. It lets you plan, track and close audits and their findings. Unit tests run on **Vitest**.
+
+> The app currently runs on mock data (`src/lib/data.ts`). There is no backend yet.
 
 ## Requirements
 
-- Node.js 20.9+ (`.nvmrc` pins 22.12.0)
+- **Node.js 20.12 or newer.** `.nvmrc` pins **22.12.0**.
+- npm (comes with Node).
+
+With [nvm-windows](https://github.com/coreybutler/nvm-windows) or nvm:
+
+```bash
+nvm install 22.12.0
+nvm use 22.12.0        # on Windows, run this in an Administrator terminal
+node -v                # should print v22.12.0
+```
+
+> **`SyntaxError: Unexpected token '??='`** when starting the app means an old Node version (for example 14) is active. Switch to Node 22 as shown above. On Windows, also make sure no separate older Node install comes earlier in your `PATH`.
+
+## Getting started
+
+```bash
+npm install
+npm run dev            # http://localhost:3000
+```
 
 ## Scripts
 
+### Develop
+
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Start the dev server on http://localhost:3000 |
-| `npm run build` | Production build |
-| `npm start` | Serve the production build |
-| `npm test` | Run Vitest once |
-| `npm run test:watch` | Vitest in watch mode |
-| `npm run lint` | ESLint |
+| `npm run dev` | Dev server with development settings (`.env.development`) |
+| `npm run dev:stage` | Dev server with staging settings (`.env.staging`) |
 
-## Structure
+### Build and run
+
+| Command | Description |
+| --- | --- |
+| `npm run build` / `npm run build:prod` | Production build (`.env.production`) |
+| `npm start` / `npm run start:prod` | Serve the production build |
+| `npm run build:stage` | Staging build (`.env.staging`) |
+| `npm run start:stage` | Serve the staging build |
+
+### Quality
+
+| Command | Description |
+| --- | --- |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript check, without building |
+| `npm test` | Run all tests once |
+| `npm run test:watch` | Tests in watch mode |
+| `npm run check` | Lint, typecheck and tests together. Run this before pushing or deploying. |
+
+Run a single test file with `npx vitest run src/components/AuditList.test.tsx`, or tests matching a name with `npx vitest run -t "filters by status"`.
+
+## Environments
+
+| | Development | Staging | Production |
+| --- | --- | --- | --- |
+| Settings file | `.env.development` | `.env.staging` | `.env.production` |
+| Header badge / title suffix | yes | yes | no |
+| Search engine indexing | blocked | blocked | allowed |
+
+- Every variable is listed in **`.env.example`**.
+- Put secrets and personal overrides in `.env.<environment>.local`. These files are git-ignored.
+- `NEXT_PUBLIC_*` values are baked in when you build, so build separately for each environment.
+
+Full details are in **[docs/environments.md](docs/environments.md)**: how staging works, how to add a variable or a new environment, and how to deploy.
+
+## Project structure
 
 ```
 src/
-  app/                 Routes: / (dashboard), /audits, /audits/[id], /findings
-  components/          AppShell (responsive sidebar/drawer), AuditList, FindingList, ...
-  lib/                 Mock data and helpers
+  app/            Routes: / (dashboard), /audits, /audits/[id], /findings
+  components/     AppShell (responsive sidebar/drawer), AuditList, FindingList, ...
+  lib/
+    data.ts       Mock data and types (the app's only data source for now)
+    env.ts        Typed access to environment variables
+    utils.ts      cn(), formatDate(), badge colour maps
+scripts/
+  run-next.mjs    Runs Next.js with a named environment (used by the *:stage scripts)
+docs/             Project documentation
 ```
+
+The code architecture and conventions are described in **[docs/architecture.md](docs/architecture.md)**.
 
 ## Responsive behaviour
 
-- **Phones (<640px):** off-canvas navigation drawer, single-column cards, 16px inputs (no iOS zoom).
-- **Tablets (640–1023px):** two-column card grid, table view from 768px.
-- **Desktop (1024px+):** fixed sidebar, full data table; extra columns appear on wider screens.
-- Light and dark mode follow the device setting; `viewport-fit=cover` and `dvh` units handle notched devices and mobile browser bars.
+- **Phones (<640px):** a slide-out navigation menu, single-column cards, and 16px input text so iOS doesn't zoom in when you tap a field.
+- **Tablets (640–1023px):** a two-column card grid, switching to a table from 768px.
+- **Desktop (1024px+):** a fixed sidebar and the full data table. Extra columns appear on wider screens.
+- Light and dark mode follow the device setting. The layout also adapts to notched phones and to mobile browser toolbars that show and hide.
 
 ## Note for Windows
 
-Turbopack can fail on very long folder paths. The scripts use the default webpack bundler, which works fine; keep the project in a short path (e.g. `C:\dev\auditapp`) if you want to try `next dev --turbopack`.
+Turbopack (`next dev --turbopack`) can fail when the project sits in a very long folder path. If the dev server fails to start, move the project to a short path such as `C:\dev\auditapp`, or remove `--turbopack` from the `dev` scripts to use webpack instead.

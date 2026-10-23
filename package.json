@@ -3,12 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
+    "dev:stage": "node scripts/run-next.mjs staging dev --turbopack",
     "build": "next build",
+    "build:stage": "node scripts/run-next.mjs staging build",
+    "build:prod": "next build",
     "start": "next start",
+    "start:stage": "node scripts/run-next.mjs staging start",
+    "start:prod": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check": "npm run lint && npm run typecheck && npm test"
   },
   "dependencies": {
     "next": "15.5.4",
@@ -34,6 +41,6 @@
     "vitest": "^3.2.4"
   },
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=20.12.0"
   }
 }

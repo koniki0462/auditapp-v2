@@ -30,8 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files: per-environment defaults are committed (non-secret only);
+# *.local overrides and any other .env files stay private
 .env*
+!.env.example
+!.env.development
+!.env.staging
+!.env.production
 
 # vercel
 .vercel
@@ -39,7 +44,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-!.env.example
 
 # logs
 logs

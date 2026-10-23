@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/AppShell";
+import { env, isProduction } from "@/lib/env";
 import "./globals.css";
+
+const appTitle = isProduction ? env.appName : `${env.appName} (${env.appEnv})`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +17,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "AuditApp", template: "%s · AuditApp" },
+  metadataBase: new URL(env.siteUrl),
+  title: { default: appTitle, template: `%s · ${appTitle}` },
   description: "Plan, track and close audits and findings.",
+  robots: isProduction ? undefined : { index: false, follow: false },
 };
 
 export const viewport: Viewport = {

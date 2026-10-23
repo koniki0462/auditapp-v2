@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { env, isProduction } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -78,6 +79,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Icon d="M4 6h16M4 12h16M4 18h16" />
           </button>
           <p className="truncate font-semibold lg:hidden">AuditApp</p>
+          {!isProduction && (
+            <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+              {env.appEnv}
+            </span>
+          )}
           <div className="ml-auto flex items-center gap-3">
             <span className="hidden text-sm text-muted sm:inline">Venkat</span>
             <span className="grid h-9 w-9 place-items-center rounded-full bg-slate-200 text-sm font-semibold dark:bg-slate-700">V</span>
