@@ -4,13 +4,19 @@
 
 AuditApp is the front end. Its data comes from the Spring Boot `audit-service` (`../audit-service`), a REST API at `NEXT_PUBLIC_API_BASE_URL`. Pages are server components that fetch from the API on every request, so they always show current data and a build does not need the API running.
 
+The app is multi-tenant. Users sign in to an organization and see only its audits and findings. The API issues a JWT per user and organization, and the app keeps it in the httpOnly cookie `auditapp_session`. All API calls happen on the server (Server Components and Server Actions), which add the token as a bearer header.
+
 ```
-app/layout.tsx  ──►  AppShell (client: sidebar / mobile drawer, env badge)
+middleware.ts  ──►  no usable session cookie? redirect to /login?next=...
       │
-      └── app/<route>/page.tsx  (async server components)
+app/layout.tsx  (html, fonts, metadata)
+      ├── (auth)/login, (auth)/signup  ──►  forms ──► lib/actions.ts (Server Actions set the cookie)
+      └── (app)/layout.tsx  ──►  getSession() ──► AppShell (sidebar, org switcher, user, sign out)
+              │
+              └── (app)/<route>/page.tsx  (async server components)
               │  await data functions
               ▼
-          lib/data.ts  (types + API client)  ──HTTP──►  audit-service /api
+          lib/data.ts  (types + API client, bearer token from the cookie)  ──HTTP──►  audit-service /api
               │  pass data as props
               ▼
           components/AuditList, FindingList, ...  (client where interactive)
@@ -31,10 +37,15 @@ For local development, start the API first with `mvn spring-boot:run` in `../aud
 
 | Route | File | Notes |
 | --- | --- | --- |
-| `/` | `app/page.tsx` | Dashboard: metric cards, recent audits, open findings |
-| `/audits` | `app/audits/page.tsx` | All audits, with search and status filter |
-| `/audits/[id]` | `app/audits/[id]/page.tsx` | Audit detail. Uses Next 15 async `params` and `notFound()` for unknown IDs. |
-| `/findings` | `app/findings/page.tsx` | Open and resolved findings |
+| `/` | `app/(app)/page.tsx` | Dashboard: metric cards, recent audits, open findings |
+| `/audits` | `app/(app)/audits/page.tsx` | All audits, with search and status filter |
+| `/audits/[id]` | `app/(app)/audits/[id]/page.tsx` | Audit detail. Uses Next 15 async `params` and `notFound()` for unknown IDs. |
+| `/findings` | `app/(app)/findings/page.tsx` | Open and resolved findings |
+| `/organization` | `app/(app)/organization/page.tsx` | The current organization's details (edit form, status badge), its members (add/remove), and creating another organization |
+| `/login` | `app/(auth)/login/page.tsx` | Sign in. `?next=` returns to the page that redirected here (same-site paths only). |
+| `/signup` | `app/(auth)/signup/page.tsx` | Create an account and its first organization |
+
+A 401 from the API (expired or revoked token) redirects to `/login`. Leaving your current organization signs you out, because its token stops working.
 
 Navigation links are defined in the `nav` array in `components/AppShell.tsx`.
 
