@@ -85,7 +85,7 @@ export function AuditList({ audits }: { audits: Audit[] }) {
             </thead>
             <tbody className="divide-y divide-line">
               {rows.map((a) => (
-                <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-slate-900">
+                <tr key={a.id} className="hover:bg-subtle/60">
                   <td className="px-4 py-3">
                     <Link href={`/audits/${a.id}`} className="font-medium hover:text-brand">
                       {a.title}

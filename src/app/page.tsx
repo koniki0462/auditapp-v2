@@ -2,9 +2,10 @@ import Link from "next/link";
 import { AuditList } from "@/components/AuditList";
 import { FindingList } from "@/components/FindingList";
 import { StatCard } from "@/components/StatCard";
-import { audits, findings } from "@/lib/data";
+import { getAudits, getFindings } from "@/lib/data";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const [audits, findings] = await Promise.all([getAudits(), getFindings()]);
   const active = audits.filter((a) => a.status === "In Progress" || a.status === "In Review").length;
   const completed = audits.filter((a) => a.status === "Completed").length;
   const open = findings.filter((f) => !f.resolved);
@@ -21,7 +22,7 @@ export default function DashboardPage() {
         <StatCard label="Total audits" value={audits.length} />
         <StatCard label="Active" value={active} hint="In progress or review" />
         <StatCard label="Completed" value={completed} />
-        <StatCard label="Open high-risk" value={critical} hint={`${open.length} open findings`} />
+        <StatCard label="Open high-risk" value={critical} hint={`${open.length} open findings`} alert={critical > 0} />
       </section>
 
       <div className="grid gap-6 2xl:grid-cols-[2fr_1fr]">

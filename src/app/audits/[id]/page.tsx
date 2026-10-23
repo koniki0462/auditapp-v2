@@ -1,28 +1,27 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { Badge } from "@/components/Badge";
 import { FindingList } from "@/components/FindingList";
 import { ProgressBar } from "@/components/ProgressBar";
-import { audits, getAudit, getFindingsForAudit } from "@/lib/data";
+import { getAudit, getFindingsForAudit } from "@/lib/data";
 import { formatDate, statusStyles } from "@/lib/utils";
 
 type Props = { params: Promise<{ id: string }> };
 
-export function generateStaticParams() {
-  return audits.map((a) => ({ id: a.id }));
-}
+// React's cache() dedupes the lookup shared by generateMetadata and the page within one request.
+const loadAudit = cache(getAudit);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  return { title: getAudit(id)?.title ?? "Audit not found" };
+  return { title: (await loadAudit(id))?.title ?? "Audit not found" };
 }
 
 export default async function AuditDetailPage({ params }: Props) {
   const { id } = await params;
-  const audit = getAudit(id);
+  const [audit, auditFindings] = await Promise.all([loadAudit(id), getFindingsForAudit(id)]);
   if (!audit) notFound();
-  const auditFindings = getFindingsForAudit(audit.id);
 
   const details = [
     ["Department", audit.department],

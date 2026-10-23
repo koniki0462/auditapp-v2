@@ -2,15 +2,15 @@
 
 ## Overview
 
-AuditApp is front-end only. Next.js renders the pages from mock data at build time, so every route is prerendered as a static page (the `/audits/[id]` pages via `generateStaticParams`).
+AuditApp is the front end. Its data comes from the Spring Boot `audit-service` (`../audit-service`), a REST API at `NEXT_PUBLIC_API_BASE_URL`. Pages are server components that fetch from the API on every request, so they always show current data and a build does not need the API running.
 
 ```
 app/layout.tsx  ──►  AppShell (client: sidebar / mobile drawer, env badge)
       │
-      └── app/<route>/page.tsx  (server components)
-              │  read data directly
+      └── app/<route>/page.tsx  (async server components)
+              │  await data functions
               ▼
-          lib/data.ts  (mock audits + findings, types, lookup helpers)
+          lib/data.ts  (types + API client)  ──HTTP──►  audit-service /api
               │  pass data as props
               ▼
           components/AuditList, FindingList, ...  (client where interactive)
@@ -20,11 +20,12 @@ app/layout.tsx  ──►  AppShell (client: sidebar / mobile drawer, env badge)
 
 `src/lib/data.ts` is the only data source. It holds:
 
-- the types `Audit`, `Finding`, `AuditStatus` and `Severity`
-- in-memory `audits` and `findings` arrays
-- the lookup helpers `getAudit(id)` and `getFindingsForAudit(auditId)`
+- the types `Audit`, `Finding`, `AuditStatus` and `Severity`, which match the API's JSON
+- async functions `getAudits()`, `getAudit(id)`, `getFindings()` and `getFindingsForAudit(auditId)`
 
-Pages call these functions directly. When a backend is added, change the data access here, for example to `fetch` from `env.apiBaseUrl`. The pages and components can stay as they are.
+Each function calls `fetch` on `env.apiBaseUrl` with `cache: "no-store"`. `getAudit` returns `null` when the API answers 404, so the page can call `notFound()`. Any other failure, including an unreachable API, throws `ApiError`, and `app/error.tsx` shows a "Couldn't load data" screen with a retry button.
+
+For local development, start the API first with `mvn spring-boot:run` in `../audit-service`. Its dev profile loads sample data. Tests never call the API: they use the fixtures in `src/test/fixtures.ts` and stub `fetch`.
 
 ## Routing
 
@@ -45,10 +46,29 @@ Navigation links are defined in the `nav` array in `components/AppShell.tsx`.
 
 ## Styling
 
-- Theme colours are CSS variables in `app/globals.css`, exposed to Tailwind as `background`, `foreground`, `surface`, `muted`, `line` and `brand`. Use these colour names instead of raw Tailwind palette colours.
+Every colour comes from tokens defined once in `app/globals.css`, each with a light and a dark value. Components never use raw Tailwind palette classes such as `bg-slate-100` or `text-white`.
+
+| Group | Tokens | Used for |
+| --- | --- | --- |
+| Base | `background`, `surface`, `subtle`, `foreground`, `muted`, `line`, `overlay` | Page, cards, hover and progress tracks, text, borders, drawer backdrop |
+| Brand | `brand`, `brand-hover`, `brand-soft`, `brand-fg` | Links and buttons, active nav, avatar. `brand-fg` is the text colour on a brand background. |
+| Tones | `neutral`, `info`, `review`, `success`, `warning`, `caution`, `danger` | Status and severity. Each tone has a solid colour (bars, accents), `-soft` (badge background) and `-fg` (badge text). |
+
+How the tones are assigned:
+
+| | neutral | info | review | success | warning | caution | danger |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Audit status | Planned | In Progress | In Review | Completed | | | |
+| Severity | Low | | | | Medium | High | Critical |
+| Other | Open finding | | | Resolved finding, 100% progress | Environment badge | | High-risk stat card |
+
+These mappings live in `statusTone`, `severityTone` and `toneStyles` in `lib/utils.ts`. To colour a new kind of value, map it to a tone; don't add new colours.
+
+Every text/background pair meets WCAG AA (at least 4.5:1) in both light and dark mode. A new token pair must as well.
+
 - Dark mode follows the operating system (`prefers-color-scheme`). There is no manual toggle.
 - The shared classes are `.card` and `.input`.
-- Badge colours come from `statusStyles` and `severityStyles` in `lib/utils.ts`. Use `cn()` to combine classes and `formatDate()` to format dates (en-IN locale).
+- Use `cn()` to combine classes and `formatDate()` to format dates (en-IN locale).
 
 ## Configuration
 

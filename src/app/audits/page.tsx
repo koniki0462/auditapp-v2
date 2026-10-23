@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { AuditList } from "@/components/AuditList";
-import { audits } from "@/lib/data";
+import { getAudits } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Audits" };
 
-export default function AuditsPage() {
+export default async function AuditsPage() {
+  const audits = await getAudits();
+
   return (
     <div className="space-y-6">
       <div>

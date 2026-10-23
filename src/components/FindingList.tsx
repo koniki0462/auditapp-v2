@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Finding } from "@/lib/data";
-import { formatDate, severityStyles } from "@/lib/utils";
+import { formatDate, severityStyles, toneStyles } from "@/lib/utils";
 import { Badge } from "./Badge";
 
 export function FindingList({ findings, showAudit = true }: { findings: Finding[]; showAudit?: boolean }) {
@@ -29,13 +29,7 @@ export function FindingList({ findings, showAudit = true }: { findings: Finding[
           </div>
           <div className="flex gap-2">
             <Badge className={severityStyles[f.severity]}>{f.severity}</Badge>
-            <Badge
-              className={
-                f.resolved
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                  : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-              }
-            >
+            <Badge className={f.resolved ? toneStyles.success : toneStyles.neutral}>
               {f.resolved ? "Resolved" : "Open"}
             </Badge>
           </div>

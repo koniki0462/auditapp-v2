@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { audits } from "@/lib/data";
+import { audits } from "@/test/fixtures";
 import { AuditList, filterAudits } from "./AuditList";
 
 describe("filterAudits", () => {

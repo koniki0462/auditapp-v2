@@ -2,7 +2,7 @@
 
 A responsive web front end for managing audits, built with **Next.js 15 (App Router)**, **React 19**, **TypeScript** and **Tailwind CSS 4**. It lets you plan, track and close audits and their findings. Unit tests run on **Vitest**.
 
-> The app currently runs on mock data (`src/lib/data.ts`). There is no backend yet.
+> Data comes from the Spring Boot API in [`../audit-service`](../audit-service/README.md). Start it before the front end.
 
 ## Requirements
 
@@ -21,10 +21,20 @@ node -v                # should print v22.12.0
 
 ## Getting started
 
+Start the API first. It serves `http://localhost:4000/api` and loads sample data:
+
+```bash
+cd ../audit-service && mvn spring-boot:run
+```
+
+Then, in this folder:
+
 ```bash
 npm install
 npm run dev            # http://localhost:3000
 ```
+
+If the API isn't running, pages show a "Couldn't load data" message with a retry button.
 
 ## Scripts
 
@@ -77,9 +87,11 @@ src/
   app/            Routes: / (dashboard), /audits, /audits/[id], /findings
   components/     AppShell (responsive sidebar/drawer), AuditList, FindingList, ...
   lib/
-    data.ts       Mock data and types (the app's only data source for now)
+    data.ts       Types and the API client (the app's only data source)
     env.ts        Typed access to environment variables
     utils.ts      cn(), formatDate(), badge colour maps
+  test/
+    fixtures.ts   Sample audits and findings for tests
 scripts/
   run-next.mjs    Runs Next.js with a named environment (used by the *:stage scripts)
 docs/             Project documentation

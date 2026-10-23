@@ -32,20 +32,25 @@ Read configuration only through `src/lib/env.ts`, which needs a literal `process
 
 ## Architecture
 
-This is a front end only, built with Next.js 15 App Router, React 19, TypeScript (strict) and Tailwind CSS 4. It has no backend or API yet.
+This is the front end, built with Next.js 15 App Router, React 19, TypeScript (strict) and Tailwind CSS 4. Data comes from the Spring Boot `audit-service` in `../audit-service` (run it with `mvn spring-boot:run`; it serves `http://localhost:4000/api` with sample data).
 
-- **Data**: `src/lib/data.ts` is the only data source. It holds in-memory mock `audits` and `findings` arrays, their types (`Audit`, `Finding`, `AuditStatus`, `Severity`) and lookup helpers (`getAudit`, `getFindingsForAudit`). Pages import these directly. When a real backend arrives, replace data access here.
-- **Routes** (`src/app`): `/` dashboard, `/audits`, `/audits/[id]` and `/findings`. Pages are Server Components. `/audits/[id]` uses `generateStaticParams` over the mock data and the Next 15 async `params` (`Promise<{ id: string }>`), and calls `notFound()` for unknown IDs.
+- **Data**: `src/lib/data.ts` is the only data source. It holds the types (`Audit`, `Finding`, `AuditStatus`, `Severity`) and async API functions (`getAudits`, `getAudit`, `getFindings`, `getFindingsForAudit`) that `fetch` from `env.apiBaseUrl` with `cache: "no-store"`. `getAudit` returns `null` on 404; other failures throw `ApiError`, which `app/error.tsx` renders. Pages call these functions directly. Test fixtures with the same sample data live in `src/test/fixtures.ts`; stub `fetch` (see `data.test.ts`) rather than calling the API in tests.
+- **Routes** (`src/app`): `/` dashboard, `/audits`, `/audits/[id]` and `/findings`. Pages are async Server Components rendered per request, so `next build` does not need the API running. `/audits/[id]` uses the Next 15 async `params` (`Promise<{ id: string }>`), shares the audit lookup with `generateMetadata` through React `cache()`, and calls `notFound()` for unknown IDs.
 - **Layout**: `app/layout.tsx` wraps every page in `AppShell`, a client component. On desktop (`lg`) it is a fixed sidebar; below that it is an off-canvas drawer that closes when the route changes. Add nav entries to the `nav` array in `AppShell.tsx`.
 - **Client components**: `AuditList` and `FindingList` hold their own search and filter state. Filtering logic is exported as a pure function (for example `filterAudits`) so it can be unit-tested without rendering.
 - **Responsive pattern**: lists render cards below `md` (`md:hidden`) and a table from `md` up (`hidden md:block`). Extra table columns appear at `lg`/`xl` with `hidden lg:table-cell`. Follow this when adding list views.
 
 ## Styling conventions
 
-- Theme tokens are CSS variables in `src/app/globals.css`, exposed through `@theme inline` as Tailwind colors: `background`, `foreground`, `surface`, `muted`, `line` and `brand`. Use these, not raw palette colors, for surfaces and text.
+- All colours come from tokens in `src/app/globals.css`, with light and dark values, exposed through `@theme inline`. Never use raw palette classes (`bg-slate-100`, `text-red-700`, `text-white`); the code currently has none.
+  - Base: `background`, `surface`, `subtle` (hover and tracks), `foreground`, `muted`, `line` and `overlay`.
+  - Brand: `brand`, `brand-hover`, `brand-soft`, and `brand-fg` for text on brand. In dark mode `brand-fg` is dark, because white on the light indigo fails contrast.
+  - Tones: `neutral`, `info`, `review`, `success`, `warning`, `caution` and `danger`. Each has a solid colour for bars and dots, `-soft` for badge backgrounds and `-fg` for badge text.
+- Map a domain value to a tone with `statusTone` and `severityTone` in `src/lib/utils.ts`, then use `toneStyles[tone]`. `statusStyles` and `severityStyles` are derived from them.
+- A new soft/fg pair must keep 4.5:1 contrast in both modes.
 - Dark mode follows the OS only (`@custom-variant dark` maps to `prefers-color-scheme`). There is no class toggle.
 - Shared component classes are `.card` and `.input`. `.input` uses a 16px font on phones to stop iOS zoom-on-focus.
-- Status and severity badge colors live in `statusStyles` and `severityStyles` in `src/lib/utils.ts`. Combine classes with `cn()`. Format dates with `formatDate()`, which uses the `en-IN` locale and parses ISO `YYYY-MM-DD` dates as local time.
+- Combine classes with `cn()`. Format dates with `formatDate()`, which uses the `en-IN` locale and parses ISO `YYYY-MM-DD` dates as local time.
 - Import from `src` with the `@/` alias, which Vitest resolves via `vite-tsconfig-paths`.
 
 ## Testing

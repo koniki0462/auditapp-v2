@@ -17,7 +17,7 @@ Every environment reads the same variables, which are listed in `.env.example`.
 | `NEXT_PUBLIC_APP_ENV` | `development`, `staging` or `production`. Outside production the app shows an environment badge in the header, appends the environment to the page title, and tells search engines not to index the site. |
 | `NEXT_PUBLIC_APP_NAME` | Display name used in the page title. |
 | `NEXT_PUBLIC_SITE_URL` | Public base URL of the deployment, used as `metadataBase` for absolute URLs. |
-| `NEXT_PUBLIC_API_BASE_URL` | Backend API base URL. Not used yet, because the app currently runs on mock data in `src/lib/data.ts`. |
+| `NEXT_PUBLIC_API_BASE_URL` | Base URL of the `audit-service` API, including `/api`, with no trailing slash. `src/lib/data.ts` fetches all data from it. The service must allow this deployment's origin in `CORS_ALLOWED_ORIGINS`. |
 
 Application code reads these through `src/lib/env.ts`, never directly from `process.env`. To add a variable:
 

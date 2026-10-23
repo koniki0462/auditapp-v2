@@ -33,7 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_1fr]">
       {/* Mobile overlay */}
       <div
-        className={cn("fixed inset-0 z-30 bg-black/40 transition-opacity lg:hidden", open ? "opacity-100" : "pointer-events-none opacity-0")}
+        className={cn("fixed inset-0 z-30 bg-overlay transition-opacity lg:hidden", open ? "opacity-100" : "pointer-events-none opacity-0")}
         onClick={() => setOpen(false)}
         aria-hidden
       />
@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         aria-label="Main navigation"
       >
         <div className="flex h-16 items-center gap-2 border-b border-line px-5">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-sm font-bold text-white">A</span>
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-sm font-bold text-brand-fg">A</span>
           <span className="text-lg font-semibold">AuditApp</span>
         </div>
         <nav className="flex-1 space-y-1 p-3">
@@ -56,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               href={item.href}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive(item.href) ? "bg-brand/10 text-brand" : "text-muted hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800",
+                isActive(item.href) ? "bg-brand-soft text-brand" : "text-muted hover:bg-subtle hover:text-foreground",
               )}
               aria-current={isActive(item.href) ? "page" : undefined}
             >
@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-surface/80 px-4 backdrop-blur sm:px-6">
           <button
             type="button"
-            className="-ml-1 grid h-10 w-10 place-items-center rounded-lg hover:bg-slate-100 lg:hidden dark:hover:bg-slate-800"
+            className="-ml-1 grid h-10 w-10 place-items-center rounded-lg hover:bg-subtle lg:hidden"
             onClick={() => setOpen(true)}
             aria-label="Open menu"
           >
@@ -80,13 +80,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <p className="truncate font-semibold lg:hidden">AuditApp</p>
           {!isProduction && (
-            <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+            <span className="rounded-md bg-warning-soft px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-warning-fg">
               {env.appEnv}
             </span>
           )}
           <div className="ml-auto flex items-center gap-3">
             <span className="hidden text-sm text-muted sm:inline">Venkat</span>
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-slate-200 text-sm font-semibold dark:bg-slate-700">V</span>
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-soft text-sm font-semibold text-brand">V</span>
           </div>
         </header>
         <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">{children}</main>

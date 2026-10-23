@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { FindingList } from "@/components/FindingList";
-import { findings } from "@/lib/data";
+import { getFindings } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Findings" };
 
-export default function FindingsPage() {
+export default async function FindingsPage() {
+  const findings = await getFindings();
   const open = findings.filter((f) => !f.resolved);
   const resolved = findings.filter((f) => f.resolved);
 
