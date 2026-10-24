@@ -32,7 +32,7 @@ Read configuration only through `src/lib/env.ts`, which needs a literal `process
 
 ## Architecture
 
-This is the front end, built with Next.js 15 App Router, React 19, TypeScript (strict) and Tailwind CSS 4. Data comes from the Spring Boot `audit-service` in `../audit-service` (run it with `mvn spring-boot:run`; it serves `http://localhost:4000/api` with sample data).
+This is the front end, built with Next.js 15 App Router, React 19, TypeScript (strict) and Tailwind CSS 4. Data comes from the Spring Boot `audit-service` in `../audit-services` (run it with `mvn spring-boot:run`; it serves `http://localhost:4000/api` with sample data).
 
 - **Auth and organizations**: the API is multi-tenant and issues a JWT per user and organization. The token lives in the httpOnly cookie `auditapp_session` (`SESSION_COOKIE` in `src/lib/auth.ts`) on this app's domain; the browser never calls the API directly. `src/lib/session.ts` (server-only) reads and sets it, and only Server Actions may set it. `src/middleware.ts` redirects to `/login?next=...` when the cookie is missing or expired (it decodes `exp` without verifying; the API does the real check). Mutations are Server Actions in `src/lib/actions.ts` (`login`, `signup`, `logout`, `switchOrganization`, `createOrganization`, `addMember`, `removeMember`); form actions return `FormState` (`error`, `fieldErrors` from the API's `errors` map) for `useActionState`. Switching organization means a new token, so it re-renders everything. Show an organization with `organizationName()` from `lib/utils.ts` (trade name, else legal name), never `legalName` directly.
 - **Data**: `src/lib/data.ts` is the only data source. It holds the types (`Audit`, `Finding`, `AuditStatus`, `Severity`, `User`, `Organization`, `Session`, `TokenResponse`) and async API functions (`getAudits`, `getAudit`, `getFindings`, `getFindingsForAudit`, `getSession`, `getMembers`, and `send` for writes) that `fetch` from `env.apiBaseUrl` with `cache: "no-store"` and the session's bearer token. A 401 from the API calls `redirect("/login")`. `getAudit` returns `null` on 404; other failures throw `ApiError` (with the API's problem `detail` and `errors`), which the `error.tsx` boundaries render. Because `data.ts` imports `next/headers` through `session.ts`, client components may only `import type` from it. Pages call these functions directly. Test fixtures with the same sample data (the dev seed's Acme Corp organization) live in `src/test/fixtures.ts`; stub `fetch` and mock `./session` and `next/navigation` (see `data.test.ts`) rather than calling the API in tests.
@@ -58,3 +58,9 @@ This is the front end, built with Next.js 15 App Router, React 19, TypeScript (s
 ## Testing
 
 Vitest runs with jsdom and Testing Library, and `vitest.setup.ts` loads the jest-dom matchers. Tests sit next to their source files as `src/**/*.test.{ts,tsx}`. Only that pattern is collected.
+
+## Conventions
+
+- Components are function components with named exports (`export function AuditList`). Only Next.js route files (`page.tsx`, `layout.tsx`, `error.tsx`, ...) use default exports, because Next requires them.
+- Style with Tailwind utilities and the tokens above, mobile first. Inline `style` is only for values computed at runtime, such as the width in `ProgressBar`.
+- Branches are `feature/`, `fix/`, `docs/`, `chore/`, `refactor/` or `style/` plus a short slug, off `main`. Commits follow Conventional Commits (`feat: add finding filters`): present tense, lowercase, no trailing period, subject under 72 characters. PR titles use the same format, and PR descriptions include a summary and test plan.
