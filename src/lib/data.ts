@@ -31,6 +31,33 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  /** Can create organizations and manage the role catalogue. */
+  isApplicationAdmin: boolean;
+}
+
+export type Gender = "Male" | "Female" | "Other" | "Prefer not to say";
+/** A member's role in one organization. Organization admins edit it and manage its members. */
+export type MemberRole = "Organization Admin" | "Member";
+
+/** A member of the current organization. Profile fields are null for accounts created by sign-up. */
+export interface Member {
+  id: string;
+  email: string;
+  name: string;
+  firstName: string | null;
+  lastName: string | null;
+  gender: Gender | null;
+  phoneNumber: string | null;
+  address: string | null;
+  role: MemberRole;
+}
+
+/** An entry in the global role catalogue, which application admins manage. */
+export interface Role {
+  id: number;
+  name: string;
+  description: string | null;
+  isActive: boolean;
 }
 
 export type EntityType =
@@ -62,10 +89,11 @@ export interface Organization {
   isActive: boolean;
 }
 
-/** The signed-in user, the organization their token works in, and every organization they belong to. */
+/** The signed-in user, the organization their token works in and their role there, and every organization they belong to. */
 export interface Session {
   user: User;
   organization: Organization;
+  role: MemberRole;
   organizations: Organization[];
 }
 
@@ -167,8 +195,12 @@ export async function getOrganization(): Promise<Organization> {
   return organization;
 }
 
-export function getMembers(): Promise<User[]> {
-  return requestList<User>("/organization/members");
+export function getMembers(): Promise<Member[]> {
+  return requestList<Member>("/organization/members");
+}
+
+export function getRoles(): Promise<Role[]> {
+  return requestList<Role>("/roles");
 }
 
 export function getAudits(): Promise<Audit[]> {

@@ -1,4 +1,13 @@
-import type { AuditStatus, EntityType, Organization, OrganizationStatus, Severity } from "./data";
+import type {
+  AuditStatus,
+  EntityType,
+  Gender,
+  MemberRole,
+  Organization,
+  OrganizationStatus,
+  Session,
+  Severity,
+} from "./data";
 
 export function cn(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(" ");
@@ -57,6 +66,18 @@ export const entityTypes: EntityType[] = [
   "Government",
   "Other",
 ];
+
+export const genders: Gender[] = ["Male", "Female", "Other", "Prefer not to say"];
+
+export const memberRoles: MemberRole[] = ["Member", "Organization Admin"];
+
+/**
+ * Whether the session may edit the organization and manage its members. Mirrors the API: an application admin
+ * counts as an organization admin in every organization they belong to.
+ */
+export function canManageOrganization(session: Pick<Session, "role" | "user">): boolean {
+  return session.role === "Organization Admin" || session.user.isApplicationAdmin;
+}
 
 export const monthNames = [
   "January", "February", "March", "April", "May", "June",

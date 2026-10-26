@@ -123,13 +123,47 @@ export async function updateOrganization(_: FormState, form: FormData): Promise<
   return { ok: true };
 }
 
-export async function addMember(_: FormState, form: FormData): Promise<FormState> {
+/** Creates an account with a profile and initial password, and adds it to the current organization. */
+export async function createMember(_: FormState, form: FormData): Promise<FormState> {
   try {
-    await send("POST", "/organization/members", { email: field(form, "email") });
+    await send("POST", "/organization/members", {
+      firstName: field(form, "firstName"),
+      lastName: field(form, "lastName"),
+      gender: optional(form, "gender"),
+      email: field(form, "email"),
+      phoneNumber: field(form, "phoneNumber"),
+      address: field(form, "address"),
+      password: field(form, "password"),
+      role: optional(form, "role"),
+    });
   } catch (e) {
     return toFormState(e);
   }
   revalidatePath("/organization");
+  return { ok: true };
+}
+
+/** Adds an existing account, by email, to the current organization. */
+export async function addMember(_: FormState, form: FormData): Promise<FormState> {
+  try {
+    await send("POST", "/organization/members/existing", { email: field(form, "email"), role: optional(form, "role") });
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath("/organization");
+  return { ok: true };
+}
+
+/** Changing your own role changes what the shell shows, so this revalidates the whole layout. */
+export async function changeMemberRole(_: FormState, form: FormData): Promise<FormState> {
+  try {
+    await send("PATCH", `/organization/members/${encodeURIComponent(field(form, "userId"))}`, {
+      role: field(form, "role"),
+    });
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -142,5 +176,26 @@ export async function removeMember(_: FormState, form: FormData): Promise<FormSt
   }
   if (field(form, "self") === "true") return logout();
   revalidatePath("/organization");
+  return { ok: true };
+}
+
+/** Application admins only: adds a role to the global catalogue. */
+export async function createRole(_: FormState, form: FormData): Promise<FormState> {
+  try {
+    await send("POST", "/roles", { name: field(form, "name"), description: optional(form, "description") });
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath("/roles");
+  return { ok: true };
+}
+
+export async function deleteRole(_: FormState, form: FormData): Promise<FormState> {
+  try {
+    await send("DELETE", `/roles/${encodeURIComponent(field(form, "id"))}`);
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath("/roles");
   return { ok: true };
 }

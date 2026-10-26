@@ -8,11 +8,13 @@ import type { Session } from "@/lib/data";
 import { env, isProduction } from "@/lib/env";
 import { cn, organizationName } from "@/lib/utils";
 
-const nav = [
+/** `appAdmin` entries only show to application admins. */
+const nav: Array<{ href: string; label: string; icon: string; appAdmin?: boolean }> = [
   { href: "/", label: "Dashboard", icon: "M3 12l9-9 9 9M5 10v10h14V10" },
   { href: "/audits", label: "Audits", icon: "M9 5h6M9 3h6a2 2 0 012 2v14a2 2 0 01-2 2H9a2 2 0 01-2-2V5a2 2 0 012-2zm0 8h6m-6 4h4" },
   { href: "/findings", label: "Findings", icon: "M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" },
   { href: "/organization", label: "Organization", icon: "M17 20h5v-2a3 3 0 00-5.4-1.8M17 20H7m10 0v-2c0-.7-.1-1.3-.4-1.8M7 20H2v-2a3 3 0 015.4-1.8M7 20v-2c0-.7.1-1.3.4-1.8m0 0a5 5 0 019.2 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" },
+  { href: "/roles", label: "Roles", icon: "M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3zm-3 9l2 2 4-4", appAdmin: true },
 ];
 
 export function initials(name: string): string {
@@ -86,7 +88,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
           <OrganizationSwitcher session={session} />
         </div>
         <nav className="flex-1 space-y-1 p-3">
-          {nav.map((item) => (
+          {nav.filter((item) => !item.appAdmin || session.user.isApplicationAdmin).map((item) => (
             <Link
               key={item.href}
               href={item.href}
